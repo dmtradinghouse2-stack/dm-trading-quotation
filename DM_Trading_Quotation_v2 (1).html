@@ -105,6 +105,14 @@ tr:hover td{background:#fafbfc}
         <input type="text" id="custom-name" placeholder="e.g. Safety Boot Laces">
       </div>
       <div class="form-group">
+        <label>Color</label>
+        <input type="text" id="custom-color" placeholder="e.g. Black / Yellow">
+      </div>
+      <div class="form-group">
+        <label>Size</label>
+        <input type="text" id="custom-size" placeholder="e.g. M / L / Free Size">
+      </div>
+      <div class="form-group">
         <label>Unit Price (LKR)</label>
         <input type="number" id="custom-price" min="0" step="0.01" placeholder="Enter price">
       </div>
@@ -268,22 +276,25 @@ function addCustomItem(){
   const name = document.getElementById('custom-name').value.trim();
   const price = document.getElementById('custom-price').value;
   const unit = document.getElementById('custom-unit').value;
+  const color = document.getElementById('custom-color').value.trim();
+  const size = document.getElementById('custom-size').value.trim();
   if(!name){alert('Please enter an item name.');return;}
-  // Auto-generate code: CUSTOM001, CUSTOM002 ...
   const code = 'CUSTOM' + String(customCounter).padStart(3,'0');
   customCounter++;
-  // Detect PAIR if name contains glove/boot/shoe keywords
   const pairWords = ['glove','boot','shoe','gauntlet','mitten'];
   const autoPair = pairWords.some(w => name.toLowerCase().includes(w));
   customItems[code] = {
     name: name,
     price: price ? parseFloat(price) : null,
-    unit: autoPair ? 'PAIR' : unit
+    unit: autoPair ? 'PAIR' : unit,
+    color: color || '—',
+    size: size || '—'
   };
-  // Clear inputs
   document.getElementById('custom-name').value = '';
   document.getElementById('custom-price').value = '';
   document.getElementById('custom-unit').value = 'EACH';
+  document.getElementById('custom-color').value = '';
+  document.getElementById('custom-size').value = '';
   renderQuote();
 }
 
@@ -353,14 +364,14 @@ async function submitQuote(){
     const p=PRODUCTS.find(x=>x.code===code);
     const item=cart[code];
     return {code:p.code,name:p.name,category:p.cat,color:p.color,size:p.size,material:p.material,
-      unit:item.unit,unitPrice:item.price};
+      unit:item.unit,unitPrice:item.price!=null?item.price:''};
   });
   const customItemsList = Object.keys(customItems).map(code=>{
     const item=customItems[code];
-    return {code:code,name:item.name,category:'Custom',color:'—',size:'—',material:'—',
-      unit:item.unit,unitPrice:item.price};
+    return {code:code,name:item.name,category:'Custom',color:item.color||'—',size:item.size||'—',material:'—',
+      unit:item.unit,unitPrice:item.price!=null?item.price:''};
   });
-  const items = [...productItemsList, ...customItemsList];
+  const items = [...productItemsList, ...customItemsList].map((item,i)=>({...item,itemNo:i+1}));
 
   const payload={
     quoteNo:currentQNo,
@@ -458,7 +469,7 @@ function printQuotation(){
 
   const allPrintItems = [
     ...Object.keys(cart).map(code=>({code, p:PRODUCTS.find(x=>x.code===code), item:cart[code], isCustom:false})),
-    ...Object.keys(customItems).map(code=>({code, p:{code:code,name:customItems[code].name,color:'—',size:'—'}, item:customItems[code], isCustom:true}))
+    ...Object.keys(customItems).map(code=>({code, p:{code:code,name:customItems[code].name,color:customItems[code].color||'—',size:customItems[code].size||'—'}, item:customItems[code], isCustom:true}))
   ];
   const rows=allPrintItems.map(({code,p,item,isCustom},idx)=>{
     const imgSrc = isCustom ? '' : (PRODUCT_IMAGES[code]||'');
