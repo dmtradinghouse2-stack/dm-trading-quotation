@@ -406,6 +406,7 @@ async function submitQuote(){
     await fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     status.className='status success';
     status.textContent='✓ Quotation '+currentQNo+' successfully submitted to Google Sheets!';
+    saveCustomerToHistory(name, document.getElementById('cust-email').value.trim());
     currentQNo=genQNo();
     document.getElementById('qno-display').textContent=currentQNo;
     cart={};
