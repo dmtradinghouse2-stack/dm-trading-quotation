@@ -308,35 +308,40 @@ function renderQuote(){
     document.getElementById('quote-body').innerHTML='<div class="empty-msg">Click on product cards or add a custom item above</div>';
     return;
   }
-  const productRows = productCodes.map(code=>{
-    const p = PRODUCTS.find(x=>x.code===code);
-    const item = cart[code];
-    return `<tr>
-      <td style="font-size:11px;font-weight:700;color:#c8a951">${p.code}</td>
-      <td>${p.name}</td>
-      <td style="text-align:center">${item.unit}</td>
-      <td style="text-align:right">${item.price!=null?'LKR '+item.price.toFixed(2):'—'}</td>
-      <td style="text-align:center"><button class="remove-btn" onclick="removeItem('${code}')">×</button></td>
-    </tr>`;
-  }).join('');
-  const customRows = customCodes.map(code=>{
-    const item = customItems[code];
-    return `<tr style="background:#fffdf5">
-      <td style="font-size:11px;font-weight:700;color:#888">${code}</td>
-      <td>
-        ${item.name}
 
-      </td>
-      <td style="text-align:center">${item.unit}</td>
-      <td style="text-align:right">
-        <input type="number" min="0" step="0.01" placeholder="Price" value="${item.price!=null?item.price:''}"
-          onchange="updateCustomPrice('${code}',this.value)"
-          style="width:90px;padding:3px 6px;border:1px solid #d0d5dd;border-radius:4px;font-size:12px;text-align:right">
-      </td>
-      <td style="text-align:center"><button class="remove-btn" onclick="removeCustomItem('${code}')">×</button></td>
-    </tr>`;
-  }).join('');
-  document.getElementById('quote-body').innerHTML=`<table>
+  // Only include items WITH price in summary
+  const productRows = productCodes
+    .filter(code => cart[code].price !== null && cart[code].price !== undefined)
+    .map(code=>{
+      const p = PRODUCTS.find(x=>x.code===code);
+      const item = cart[code];
+      return `<tr>
+        <td style="font-size:11px;font-weight:700;color:#c8a951">${p.code}</td>
+        <td>${p.name}</td>
+        <td style="text-align:center">${item.unit}</td>
+        <td style="text-align:right">LKR ${item.price.toFixed(2)}</td>
+        <td style="text-align:center"><button class="remove-btn" onclick="removeItem('${code}')">×</button></td>
+      </tr>`;
+    }).join('');
+
+  const customRows = customCodes
+    .filter(code => customItems[code].price !== null && customItems[code].price !== undefined)
+    .map(code=>{
+      const item = customItems[code];
+      return `<tr style="background:#fffdf5">
+        <td style="font-size:11px;font-weight:700;color:#888">${code}</td>
+        <td>${item.name}</td>
+        <td style="text-align:center">${item.unit}</td>
+        <td style="text-align:right">LKR ${item.price.toFixed(2)}</td>
+        <td style="text-align:center"><button class="remove-btn" onclick="removeCustomItem('${code}')">×</button></td>
+      </tr>`;
+    }).join('');
+
+  // Items waiting for price (product cards selected but no price yet)
+  const pendingHtml = '';
+
+  const hasItems = productRows || customRows;
+  document.getElementById('quote-body').innerHTML = hasItems ? `<table>
     <thead><tr>
       <th style="width:70px">Code</th>
       <th>Product / Item</th>
@@ -345,7 +350,7 @@ function renderQuote(){
       <th style="width:36px"></th>
     </tr></thead>
     <tbody>${productRows}${customRows}</tbody>
-  </table>`;
+  </table>${pendingHtml}` : `<div class="empty-msg">Select products and enter Unit Price to add them here</div>`;
 }
 
 async function submitQuote(){
@@ -354,7 +359,22 @@ async function submitQuote(){
   const status=document.getElementById('status-msg');
   if(!name){status.className='status error';status.textContent='⚠ Please enter the customer / company name.';return;}
   if(!date){status.className='status error';status.textContent='⚠ Please select a date.';return;}
-  if(!Object.keys(cart).length){status.className='status error';status.textContent='⚠ Please select at least one product.';return;}
+  if(!Object.keys(cart).length && !Object.keys(customItems).length){status.className='status error';status.textContent='⚠ Please select at least one product.';return;}
+
+  // Check for items without price
+  const noPrice = [
+    ...Object.keys(cart).filter(code=>cart[code].price===null||cart[code].price===undefined),
+    ...Object.keys(customItems).filter(code=>customItems[code].price===null||customItems[code].price===undefined)
+  ];
+  if(noPrice.length){
+    const names = noPrice.map(code=>{
+      if(cart[code]){const p=PRODUCTS.find(x=>x.code===code);return p?p.name:code;}
+      return customItems[code]?customItems[code].name:code;
+    });
+    status.className='status error';
+    status.textContent='⚠ Please enter Unit Price for: ' + names.join(', ');
+    return;
+  }
 
   const btn=document.getElementById('submit-btn');
   const btnOriginalText=btn.innerHTML;
