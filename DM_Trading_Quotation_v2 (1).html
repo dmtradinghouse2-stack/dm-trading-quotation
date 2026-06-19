@@ -514,7 +514,8 @@ function printQuotation(){
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Inter',Arial,sans-serif;background:#fff;color:#222;font-size:13px}
-    .page{width:210mm;min-height:297mm;margin:0 auto;padding:0;background:#fff;position:relative}
+    .page{width:210mm;min-height:297mm;margin:0 auto;padding:0;background:#fff;position:relative;display:flex;flex-direction:column}
+    .page-spacer{flex:1 1 auto}
     /* ── TOP HEADER BAND ── */
     .header-band{background:#1a2744;padding:0;display:flex;align-items:stretch;min-height:88px}
     .header-logo-box{background:#000;padding:14px 18px;display:flex;align-items:center;justify-content:center;min-width:100px}
@@ -555,7 +556,7 @@ function printQuotation(){
     @media print{
       body{margin:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
       *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-      .page{width:100%;box-shadow:none}
+      .page{width:100%;min-height:297mm;box-shadow:none}
       @page{margin:0;size:A4}
     }
     /* Force colors always */
@@ -620,6 +621,9 @@ function printQuotation(){
 
     <!-- NOTE -->
     ${note?`<div style="height:12px"></div><div class="note-band"><strong>Note &nbsp;</strong>${note}</div>`:'<div style="height:16px"></div>'}
+
+    <!-- SPACER pushes terms & footer to bottom -->
+    <div class="page-spacer"></div>
 
     <!-- TERMS -->
     <div class="terms">
